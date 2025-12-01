@@ -43,7 +43,8 @@ impl AudioPlayer {
     }
 
     pub fn set_volume(&self, volume: f32) {
-        self.sink.set_volume(volume);
+        let clamped = volume.clamp(0.0, 2.0);
+        self.sink.set_volume(clamped);
     }
     
     pub fn is_paused(&self) -> bool {

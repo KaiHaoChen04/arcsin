@@ -8,3 +8,7 @@ ratatui = "0.26"
 crossterm = "0.27"
 rodio = "0.17"
 anyhow = "1.0"
+
+[[bin]]
+name = "server"
+path = "server/server.rs"

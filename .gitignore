@@ -27,3 +27,6 @@ target
 
 # Mac hidden file
 .DS_Store
+
+#vs code config setting
+/.vscode

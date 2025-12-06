@@ -1,6 +1,5 @@
 use music_player_entity::track::Model as Track;
 
-
 pub struct TrackList{
     tracks: Vec<Track>,
     played: Vec<Track>,
@@ -30,5 +29,11 @@ impl TrackList{
     }
     pub fn set_currently_playing(&mut self track: Track) {
         self.currently_playing = Some(track);
+    }
+    pub fn get_played(&self) -> &Vec<Track> {
+        &self.played;
+    }
+    pub fn get_liked(&self) -> &Vec<Track> {
+        &self.liked;
     }
 }

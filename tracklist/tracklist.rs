@@ -25,4 +25,10 @@ impl TrackList{
         self.played.retain(|t| t.id != track.id);
         self.liked.retain(|t| t.id != track.id);
     }
+    pub fn get_currently_playing(&self) -> Option<&Track> {
+        self.currently_playing.as_ref();
+    }
+    pub fn set_currently_playing(&mut self track: Track) {
+        self.currently_playing = Some(track);
+    }
 }

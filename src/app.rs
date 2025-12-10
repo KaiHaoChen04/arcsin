@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::{fs};
 use crate::audio::AudioPlayer;
-use std::io::Error as IoError;
 
 pub struct App {
     pub current_playlist: Vec<PathBuf>,

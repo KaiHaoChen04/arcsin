@@ -8,8 +8,9 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{io, time::Duration};
 
 mod app;
-mod ui;
 mod audio;
+mod tracklist;
+mod ui;
 
 use crate::app::App;
 use crate::ui::ui;
@@ -60,7 +61,8 @@ fn run_app<B: ratatui::backend::Backend>(
                     }
                     KeyCode::Down | KeyCode::Char('j') => {
                         if !app.current_playlist.is_empty() {
-                            app.selected_index = (app.selected_index + 1) % app.current_playlist.len();
+                            app.selected_index =
+                                (app.selected_index + 1) % app.current_playlist.len();
                         }
                     }
                     KeyCode::Up | KeyCode::Char('k') => {
@@ -82,8 +84,7 @@ fn run_app<B: ratatui::backend::Backend>(
                         if app.is_playing {
                             app.audio_player.pause();
                             app.is_playing = false;
-                        } 
-                        else {
+                        } else {
                             app.audio_player.resume();
                             app.is_playing = true;
                         }

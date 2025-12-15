@@ -1,34 +1,19 @@
-use std::path::{Path, PathBuf};
-use std::{fs};
-use crate::audio::AudioPlayer;
+use crate::tracklist::{Track, TrackList};
+use std::fs;
+use std::path::Path;
 
 pub struct App {
-    pub current_playlist: Vec<PathBuf>,
-    pub selected_index: usize,
-    pub is_playing: bool,
-    pub volume: f32,
-    pub should_quit: bool,
-    pub audio_player: AudioPlayer,
+    pub track_list: TrackList,
 }
 
 impl App {
-    pub fn new() -> App {
-        App {
-            current_playlist: vec![],
-            selected_index: 0,
-            is_playing: false,
-            volume: 1.0,
-            should_quit: false,
-            audio_player: AudioPlayer::new(),
+    pub fn new() -> Self {
+        Self {
+            track_list: TrackList::new(),
         }
     }
 
-    pub fn on_tick(&mut self) {
-        // Update progress, etc.
-    }
-
-    pub fn scan_directory(&mut self, path: &Path) ->std::io::Result<()> {
-        self.current_playlist.clear();
+    pub fn scan_directory(&mut self, path: &Path) -> std::io::Result<()> {
         let entries = fs::read_dir(path)?;
         for entry in entries.flatten() {
             let path = entry.path();
@@ -36,12 +21,16 @@ impl App {
                 if let Some(extension) = path.extension() {
                     let ext = extension.to_string_lossy().to_lowercase();
                     if ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "flac" {
-                        self.current_playlist.push(path);
+                        let id = path.file_name().unwrap().to_string_lossy().to_string();
+                        let track = Track {
+                            id,
+                            file_path: path.canonicalize()?, // Use absolute path
+                        };
+                        self.track_list.add_track(track);
                     }
                 }
             }
         }
-        self.current_playlist.sort();
         Ok(())
     }
 }

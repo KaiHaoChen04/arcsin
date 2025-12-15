@@ -1,16 +1,17 @@
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
     pub id: String,
     pub file_path: PathBuf,
 }
 
 pub struct TrackList {
-    tracks: Vec<Track>,
-    played: Vec<Track>,
-    liked: Vec<Track>,
-    currently_playing: Option<Track>,
+    pub tracks: Vec<Track>,
+    pub played: Vec<Track>,
+    pub liked: Vec<Track>,
+    pub currently_playing: Option<Track>,
 }
 
 impl TrackList {

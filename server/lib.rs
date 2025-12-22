@@ -26,8 +26,8 @@ impl ThreadPool{
     where 
         F: FnOnce() + Send + 'static, // bounds on generic type
     {
-        let job = Box::new(f);
-        self.sender.send(job).unwrap();
+        let job = Box::new(f); // box the function
+        self.sender.send(job).unwrap(); // send the function to the worker
     }
 }
 

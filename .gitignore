@@ -30,3 +30,9 @@ target
 
 #vs code config setting
 /.vscode
+
+# postgresql database
+*.db
+
+# env
+.env

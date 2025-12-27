@@ -19,9 +19,9 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    sub: String,
-    exp: usize,
-    iat: usize,
+    sub: String, // user
+    exp: usize, // expiration
+    iat: usize, // issued at
 }
 
 pub enum AuthError {
@@ -30,6 +30,7 @@ pub enum AuthError {
     TokenCreation,
     InvalidToken,
     UserAlreadyExists,
+    TimeOutCredentials,
 }
 
 impl IntoResponse for AuthError {
@@ -40,6 +41,7 @@ impl IntoResponse for AuthError {
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
             AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
+            AuthError::TimeOutCredentials => (StatusCode::GATEWAY_TIMEOUT, "Time out credentials"),
         };
         let body = Json(serde_json::json!({
             "error": error_message,
@@ -84,8 +86,8 @@ pub async fn login(
         .bind(payload.username)
         .fetch_optional(&state.db)
         .await
-        .map_err(|_| AuthError::WrongCredentials)?
-        .ok_or(AuthError::WrongCredentials)?;
+        .map_err(|_| AuthError::TimeOutCredentials)?
+        .ok_or(AuthError::TimeOutCredentials)?;
 
     let parsed_hash =
         PasswordHash::new(&user.password_hash).map_err(|_| AuthError::WrongCredentials)?;
@@ -95,7 +97,7 @@ pub async fn login(
 
     let now = OffsetDateTime::now_utc();
     let iat = now.unix_timestamp() as usize;
-    let exp = (now + Duration::days(1)).unix_timestamp() as usize;
+    let exp = (now + Duration::hours(2)).unix_timestamp() as usize;
     let claims = Claims {
         sub: user.username,
         exp,

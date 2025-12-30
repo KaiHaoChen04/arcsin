@@ -20,17 +20,16 @@ use validator::Validate;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     sub: String, // user
-    exp: usize, // expiration
-    iat: usize, // issued at
+    exp: usize,  // expiration
+    iat: usize,  // issued at
 }
 
 pub enum AuthError {
     WrongCredentials,
     MissingCredentials,
     TokenCreation,
-    InvalidToken,
     UserAlreadyExists,
-    TimeOutCredentials,
+    UserTimeOut,
 }
 
 impl IntoResponse for AuthError {
@@ -39,9 +38,8 @@ impl IntoResponse for AuthError {
             AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, "Wrong credentials"),
             AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
-            AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
-            AuthError::TimeOutCredentials => (StatusCode::GATEWAY_TIMEOUT, "Time out credentials"),
+            AuthError::UserTimeOut => (StatusCode::GATEWAY_TIMEOUT, "Time out"),
         };
         let body = Json(serde_json::json!({
             "error": error_message,
@@ -71,7 +69,7 @@ pub async fn register(
     )
     .bind(payload.username)
     .bind(password_hash)
-    .fetch_one(&state.db)
+    .fetch_one(&state.app.db)
     .await
     .map_err(|_| AuthError::UserAlreadyExists)?;
 
@@ -84,10 +82,10 @@ pub async fn login(
 ) -> Result<Json<AuthBody>, AuthError> {
     let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
         .bind(payload.username)
-        .fetch_optional(&state.db)
+        .fetch_optional(&state.app.db)
         .await
-        .map_err(|_| AuthError::TimeOutCredentials)?
-        .ok_or(AuthError::TimeOutCredentials)?;
+        .map_err(|_| AuthError::UserTimeOut)?
+        .ok_or(AuthError::UserTimeOut)?;
 
     let parsed_hash =
         PasswordHash::new(&user.password_hash).map_err(|_| AuthError::WrongCredentials)?;

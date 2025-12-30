@@ -13,6 +13,20 @@ pub struct User {
     pub created_at: OffsetDateTime,
 }
 
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TrackRecord {
+    pub id: Uuid,
+    pub title: String,
+    pub artist: Option<String>,
+    pub filename: String,
+    // data is too large to serialize by default, usually fetched separately
+    #[serde(skip)]
+    pub data: Vec<u8>,
+    pub mime_type: String,
+    #[serde(with = "time::serde::iso8601")]
+    pub created_at: OffsetDateTime,
+}
+
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterPayload {
     #[validate(length(min = 3, message = "Username must be at least 3 characters"))]

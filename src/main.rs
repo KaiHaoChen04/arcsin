@@ -86,7 +86,8 @@ async fn list_tracks(State(state): State<Arc<AppState>>) -> Json<Vec<TrackRecord
 async fn stream_track(
     Path(id): Path<uuid::Uuid>,
     State(state): State<Arc<AppState>>,
-) -> Result<Response, StatusCode> {
+    headers: axum::http::HeaderMap,
+) -> Result<impl IntoResponse, StatusCode> {
     // Fetch track data from DB
     let record = sqlx::query!("SELECT data, mime_type FROM tracks WHERE id = $1", id)
         .fetch_optional(&state.app.db)
@@ -94,13 +95,69 @@ async fn stream_track(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     if let Some(record) = record {
-        // Stream the data
-        // For larger files, we should use a Cursor but data is already in memory here as Vec<u8>
-        // Ideally we would stream from DB using `copy_out` or chunks, but for now this works.
-        let body = Body::from(record.data);
+        let file_size = record.data.len();
+        println!("Stream request for ID: {}, Size: {}", id, file_size);
 
+        let range_header = headers
+            .get(axum::http::header::RANGE)
+            .and_then(|h| h.to_str().ok());
+
+        if let Some(range_value) = range_header {
+            println!("Received Range header: {}", range_value);
+            // Expected format: "bytes=start-end" or "bytes=start-"
+            if let Some(ranges) = range_value.strip_prefix("bytes=") {
+                let parts: Vec<&str> = ranges.split('-').collect();
+                if parts.len() >= 1 {
+                    let start_str = parts[0];
+                    let end_str = if parts.len() > 1 { parts[1] } else { "" };
+
+                    let start = start_str.parse::<usize>().unwrap_or(0);
+                    let end = if !end_str.is_empty() {
+                        end_str.parse::<usize>().unwrap_or(file_size - 1)
+                    } else {
+                        file_size - 1
+                    };
+
+                    println!("Parsed Range: start={}, end={}", start, end);
+
+                    // Clamp end to file_size - 1
+                    let end = std::cmp::min(end, file_size - 1);
+
+                    if start > end || start >= file_size {
+                        println!("Range not satisfiable");
+                        return Err(StatusCode::RANGE_NOT_SATISFIABLE);
+                    }
+
+                    let chunk_size = end - start + 1;
+                    let data_slice = &record.data[start..=end];
+                    let body = Body::from(data_slice.to_vec());
+
+                    println!("Returning 206 Partial Content. Chunk size: {}", chunk_size);
+                    return Ok(Response::builder()
+                        .status(StatusCode::PARTIAL_CONTENT)
+                        .header(axum::http::header::CONTENT_TYPE, record.mime_type)
+                        .header(axum::http::header::ACCEPT_RANGES, "bytes")
+                        .header(
+                            axum::http::header::CONTENT_RANGE,
+                            format!("bytes {}-{}/{}", start, end, file_size),
+                        )
+                        .header(axum::http::header::CONTENT_LENGTH, chunk_size.to_string())
+                        .body(body)
+                        .unwrap());
+                }
+            } else {
+                println!("Range header did not start with bytes=");
+            }
+        } else {
+            println!("No Range header received. Returning full content.");
+        }
+
+        // Full content
+        let body = Body::from(record.data);
         Ok(Response::builder()
-            .header("Content-Type", record.mime_type)
+            .header(axum::http::header::CONTENT_TYPE, record.mime_type)
+            .header(axum::http::header::ACCEPT_RANGES, "bytes")
+            .header(axum::http::header::CONTENT_LENGTH, file_size.to_string())
             .body(body)
             .unwrap())
     } else {

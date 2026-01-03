@@ -107,14 +107,21 @@ async fn stream_track(
             // Expected format: "bytes=start-end" or "bytes=start-"
             if let Some(ranges) = range_value.strip_prefix("bytes=") {
                 let parts: Vec<&str> = ranges.split('-').collect();
-                if parts.len() >= 1 {
+                println!("Parts: {:?}", parts);
+                if !parts.is_empty() {
                     let start_str = parts[0];
-                    let end_str = if parts.len() > 1 { parts[1] } else { "" };
+                    let end_str = if parts.len() > 1 { 
+                        parts[1] 
+                    } 
+                    else { 
+                        "" 
+                    };
 
                     let start = start_str.parse::<usize>().unwrap_or(0);
                     let end = if !end_str.is_empty() {
                         end_str.parse::<usize>().unwrap_or(file_size - 1)
-                    } else {
+                    } 
+                    else {
                         file_size - 1
                     };
 

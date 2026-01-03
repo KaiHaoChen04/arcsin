@@ -15,7 +15,7 @@ const TrackList = ({ tracks, onSelect, currentTrackId }) => {
                                 : "hover:bg-gray-800 text-gray-300"
                         }`}
                     >
-                        <span>{track.id}</span>
+                        <span>{track.title + " - " + track.artist || track.filename}</span>
                         {/* <span>Duration?</span> */}
                     </div>
                 ))}

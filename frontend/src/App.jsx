@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Player from './components/Player';
 import TrackList from './components/TrackList';
 import Header from './components/Header';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
-function App() {
+function MainPlayer() {
     const [tracks, setTracks] = useState([]);
     const [currentTrack, setCurrentTrack] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -63,8 +68,31 @@ function App() {
                 onNext={handleNext}
                 onPrev={handlePrev}
             />
-            <ToastContainer position="top-right" theme="dark" />
         </div>
+    );
+}
+
+function App() {
+    return (
+        <Router>
+            <AuthProvider>
+                <div className="App">
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route 
+                            path="/" 
+                            element={
+                                <ProtectedRoute>
+                                    <MainPlayer />
+                                </ProtectedRoute>
+                            } 
+                        />
+                    </Routes>
+                    <ToastContainer position="top-right" theme="dark" />
+                </div>
+            </AuthProvider>
+        </Router>
     );
 }
 

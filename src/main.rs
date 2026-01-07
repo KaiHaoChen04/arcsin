@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
     http::{Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{delete, get, post},
     Json, Router,
 };
 use std::{net::SocketAddr, sync::Arc};
@@ -13,7 +13,7 @@ mod app;
 mod auth;
 mod db;
 mod models;
-mod tracklist;
+mod playlist;
 
 use crate::app::App;
 use crate::models::TrackRecord;
@@ -44,7 +44,7 @@ async fn main() {
     // CORS
     let cors = CorsLayer::new()
         .allow_origin(Any)
-        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_methods(Any)
         .allow_headers(Any);
 
     // Router
@@ -59,6 +59,19 @@ async fn main() {
                 state.clone(),
                 auth::auth_middleware,
             )),
+        )
+        .route(
+            "/api/playlists",
+            get(playlist::list_playlists).post(playlist::create_playlist),
+        )
+        .route("/api/playlists/:id", get(playlist::get_playlist))
+        .route(
+            "/api/playlists/:id/tracks",
+            post(playlist::add_track_to_playlist),
+        )
+        .route(
+            "/api/playlists/:id/tracks/:track_id",
+            delete(playlist::remove_track_from_playlist),
         )
         .layer(cors)
         .with_state(state);
@@ -110,18 +123,12 @@ async fn stream_track(
                 println!("Parts: {:?}", parts);
                 if !parts.is_empty() {
                     let start_str = parts[0];
-                    let end_str = if parts.len() > 1 { 
-                        parts[1] 
-                    } 
-                    else { 
-                        "" 
-                    };
+                    let end_str = if parts.len() > 1 { parts[1] } else { "" };
 
                     let start = start_str.parse::<usize>().unwrap_or(0);
                     let end = if !end_str.is_empty() {
                         end_str.parse::<usize>().unwrap_or(file_size - 1)
-                    } 
-                    else {
+                    } else {
                         file_size - 1
                     };
 

@@ -1,2 +1,2 @@
 # arcsin
-Audio Player - Specified for enthusiast
+Audio Player - In Development...

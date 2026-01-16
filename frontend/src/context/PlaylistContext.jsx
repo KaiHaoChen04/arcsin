@@ -40,6 +40,17 @@ export const PlaylistProvider = ({ children }) => {
             throw error;
         }
     };
+    const deletePlaylist = async(playlistId) => {
+        try{
+            await axios.delete(`http://localhost:3000/api/playlists/${playlistId}`)
+            setPlaylists(playlists.filter(playlist => playlist.id !== playlistId));
+            toast.success("Playlist deleted");
+        }
+        catch(error){
+            console.error(error);
+            toast.error("Failed to delete playlist");
+        }
+    }
 
     const addTrackToPlaylist = async (playlistId, trackId) => {
         try {
@@ -66,7 +77,7 @@ export const PlaylistProvider = ({ children }) => {
     };
 
     return (
-        <PlaylistContext.Provider value={{ playlists, createPlaylist, addTrackToPlaylist, removeTrackFromPlaylist, fetchPlaylists }}>
+        <PlaylistContext.Provider value={{ playlists, createPlaylist, addTrackToPlaylist, removeTrackFromPlaylist, fetchPlaylists, deletePlaylist }}>
             {children}
         </PlaylistContext.Provider>
     );

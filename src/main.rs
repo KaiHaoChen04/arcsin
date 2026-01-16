@@ -64,7 +64,8 @@ async fn main() {
             "/api/playlists",
             get(playlist::list_playlists).post(playlist::create_playlist),
         )
-        .route("/api/playlists/:id", get(playlist::get_playlist))
+        .route(
+            "/api/playlists/:id", get(playlist::get_playlist).delete(playlist::delete_playlist))
         .route(
             "/api/playlists/:id/tracks",
             post(playlist::add_track_to_playlist),

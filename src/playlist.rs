@@ -75,6 +75,17 @@ pub async fn create_playlist(
 
     Ok(Json(playlist))
 }
+pub async fn delete_playlist(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, StatusCode> {
+    sqlx::query!("DELETE FROM playlists WHERE id = $1", id)
+        .execute(&state.app.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(StatusCode::OK)
+}
 
 pub async fn get_playlist(
     State(state): State<Arc<AppState>>,

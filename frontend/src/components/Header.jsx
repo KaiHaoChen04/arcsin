@@ -14,7 +14,7 @@ const Header = () => {
   return (
     <div>
       <div className="flex justify-between items-center w-full h-16 bg-gray-800 text-white px-6">
-        <h1 className="text-xl font-bold">ArcSin</h1>
+        <h1 className="text-xl font-bold">Arcsin</h1>
         <div className="flex space-x-4">
             {user ? (
                 <button onClick={handleLogout} className="hover:text-gray-300 text-red-400">Logout</button>

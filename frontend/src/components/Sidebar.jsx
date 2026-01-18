@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlaylist } from '../context/PlaylistContext';
+import { House, Users, Search } from 'lucide-react';
 
 const Sidebar = () => {
     const { playlists, createPlaylist } = usePlaylist();
@@ -31,7 +32,13 @@ const Sidebar = () => {
                 
                 <nav className="space-y-4">
                     <Link to="/" className="flex items-center text-gray-300 hover:text-white transition">
-                        <span className="mr-3">🏠</span> Home
+                        <House className="mr-3" /> Home
+                    </Link>
+                    <Link to="/friends" className="flex items-center text-gray-300 hover:text-white transition">
+                        <Users className="mr-3" /> Friends
+                    </Link>
+                    <Link to="/search" className="flex items-center text-gray-300 hover:text-white transition">
+                        <Search className="mr-3" /> Search
                     </Link>
                 </nav>
             </div>

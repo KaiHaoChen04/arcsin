@@ -52,6 +52,14 @@ impl App {
             )
             .execute(&self.db)
             .await?;
+
+            // Delete file after successful import
+            fs::remove_file(path)?;
+            println!("Deleted file: {}", filename);
+        } else {
+            // File already exists in database, delete it from assets
+            fs::remove_file(path)?;
+            println!("Skipped duplicate and deleted file: {}", filename);
         }
         Ok(())
     }

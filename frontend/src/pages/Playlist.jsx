@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
 import { useOutletContext } from 'react-router-dom';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2} from 'lucide-react';
 import { usePlaylist } from '../context/PlaylistContext';
 
 const Playlist = () => {

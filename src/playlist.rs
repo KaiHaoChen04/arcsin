@@ -91,7 +91,7 @@ pub async fn get_playlist(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PlaylistWithTracks>, StatusCode> {
-    let playlist = sqlx::query_as::<_, Playlist>("SELECT * FROM playlists WHERE id = $1")
+    let playlist = sqlx::query_as::<sqlx::Postgres, Playlist>("SELECT * FROM playlists WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.app.db)
         .await
@@ -100,7 +100,7 @@ pub async fn get_playlist(
 
     // Fetch tracks
     // Join playlist_tracks with tracks
-    let tracks = sqlx::query_as::<_, TrackRecord>(
+    let tracks = sqlx::query_as::<sqlx::Postgres, TrackRecord>(
         r#"
         SELECT t.* 
         FROM tracks t

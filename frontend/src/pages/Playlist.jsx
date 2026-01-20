@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
 import { useOutletContext } from 'react-router-dom';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2} from 'lucide-react';
 import { usePlaylist } from '../context/PlaylistContext';
 
 const Playlist = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [playlist, setPlaylist] = useState(null);
     const [tracks, setTracks] = useState([]);
     const [showMenu, setShowMenu] = useState(false);
     
     const { handleSelectTrack, currentTrackId } = useOutletContext() || {};
     const { deletePlaylist } = usePlaylist();
+
+    const handleDelete = async () => {
+        await deletePlaylist(id);
+        navigate('/');
+    };
 
     useEffect(() => {
         fetchPlaylist();
@@ -44,7 +50,7 @@ const Playlist = () => {
                 {showMenu && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-[#282828] rounded shadow-xl z-20 overflow-hidden border border-white/10">
                         <button 
-                            onClick={() => deletePlaylist(id)} 
+                            onClick={handleDelete} 
                             className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-[#3E3E3E] flex items-center gap-2"
                         >
                             <Trash2 size={16} />
@@ -52,7 +58,7 @@ const Playlist = () => {
                         </button>
                     </div>
                 )}
-            </div>
+            </div> 
             
             <div className="flex items-end mb-8 space-x-6">
                 <div className="w-48 h-48 bg-gradient-to-br from-purple-700 to-blue-900 shadow-2xl flex items-center justify-center text-6xl shadow-lg">

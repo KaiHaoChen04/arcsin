@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePlaylist } from '../context/PlaylistContext';
 
 const TrackList = ({ tracks, onSelect, currentTrackId, playlistId, onRemove }) => {
     const { playlists, addTrackToPlaylist, removeTrackFromPlaylist } = usePlaylist();
     const [openMenuTrackId, setOpenMenuTrackId] = useState(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (openMenuTrackId !== null && !event.target.closest('.playlist-dropdown')) {
+                setOpenMenuTrackId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openMenuTrackId]);
 
     const handleAdd = async (playlistId, trackId) => {
         await addTrackToPlaylist(playlistId, trackId);
@@ -65,7 +78,7 @@ const TrackList = ({ tracks, onSelect, currentTrackId, playlistId, onRemove }) =
                                     </button>
 
                                     {openMenuTrackId === track.id && (
-                                        <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 rounded-md shadow-lg z-50 border border-gray-700">
+                                        <div className="playlist-dropdown absolute right-0 top-full mt-2 w-48 bg-gray-900 rounded-md shadow-lg z-50 border border-gray-700">
                                             <div className="py-1">
                                                 <div className="px-4 py-2 text-xs text-gray-500 uppercase font-semibold border-b border-gray-800">
                                                     Add to Playlist

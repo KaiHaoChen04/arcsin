@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Playlist from './pages/Playlist';
+import Friends from './pages/Friends';
 
 // Home Page Component
 const Home = () => {
@@ -41,88 +42,7 @@ const Home = () => {
     );
 };
 
-// Layout Component handling Player State
-const Layout = () => {
-    const [currentTrack, setCurrentTrack] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [queue, setQueue] = useState([]);
-
-    const handleSelectTrack = (track, newQueue = []) => {
-        setCurrentTrack(track);
-        // Only update queue if a new queue is provided
-        if (newQueue.length > 0) {
-            setQueue(newQueue);
-        }
-        setIsPlaying(true);
-    };
-
-    const handlePlayPause = () => {
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleNext = () => {
-        if (!currentTrack || queue.length === 0) {
-            toast.error("No tracks in queue");
-            return;
-        }
-        const index = queue.findIndex(t => t.id === currentTrack.id);
-        const nextIndex = (index + 1) % queue.length;
-        setCurrentTrack(queue[nextIndex]);
-        setIsPlaying(true);
-    };
-
-    const handlePrev = () => {
-        if (!currentTrack || queue.length === 0) {
-            toast.error("No tracks in queue");
-            return;
-        }
-        const index = queue.findIndex(t => t.id === currentTrack.id);
-        const prevIndex = (index - 1 + queue.length) % queue.length;
-        setCurrentTrack(queue[prevIndex]);
-        setIsPlaying(true);
-    };
-
-    return (
-        <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
-            <Sidebar />
-            
-            <div className="flex-1 flex flex-col min-w-0">
-                <Header />
-                
-                <div className="flex-1 overflow-y-auto scrollbar-hide">
-                    {/* Pass context to children (Home, Playlist) */}
-                    <Routes>
-                         <Route path="/" element={<Home />} />
-                         <Route path="/playlist/:id" element={<Playlist />} />
-                    </Routes>
-                </div>
-                
-                <Player 
-                    currentTrack={currentTrack} 
-                    isPlaying={isPlaying} 
-                    onPlayPause={handlePlayPause}
-                    onNext={handleNext}
-                    onPrev={handlePrev}
-                />
-            </div>
-            
-            <ToastContainer position="top-right" theme="dark" />
-        </div>
-    );
-};
-
-// Wrapper ensuring Context is available
 const ProtectedLayout = () => {
-    // Need to bridge Outlet context from Layout to Routes? 
-    // Actually, Layout *contains* the Routes in my design above.
-    // But `Home` calls `useOutletContext`. `Home` is child of `Layout` -> `Routes` -> `Route`?
-    // No, `Routes` in `Layout` renders `Home`. `Home` is not an Outlet of Layout. 
-    // `Home` is a direct child rendered by Routes. 
-    // `useOutletContext` only works if rendered via <Outlet />.
-    
-    // Correction:
-    // To use useOutletContext, I should use a Layout Route.
-    // <Route element={<MainLayout />}> ... </Route>
     return (
         <ProtectedRoute>
            <MainLayout /> 
@@ -202,6 +122,7 @@ function App() {
                             }>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/playlist/:id" element={<Playlist />} />
+                                <Route path="/friends" element={<Friends />} />
                             </Route>
                         </Routes>
                         <ToastContainer position="top-right" theme="dark" />

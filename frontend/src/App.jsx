@@ -20,7 +20,7 @@ const Home = () => {
     const { handleSelectTrack, currentTrackId } = useOutletContext();
 
     useEffect(() => {
-        fetch('http://localhost:3000/api/tracks')
+        fetch('/api/tracks')
             .then(res => res.json())
             .then(data => setTracks(data))
             .catch(err => console.error("Failed to fetch tracks:", err));

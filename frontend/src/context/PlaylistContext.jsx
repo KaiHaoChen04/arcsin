@@ -19,7 +19,7 @@ export const PlaylistProvider = ({ children }) => {
 
     const fetchPlaylists = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/playlists');
+            const res = await axios.get('/api/playlists');
             setPlaylists(res.data);
         } catch (error) {
             console.error("Failed to fetch playlists");
@@ -28,7 +28,7 @@ export const PlaylistProvider = ({ children }) => {
 
     const createPlaylist = async (name, description = "") => {
         try {
-            const res = await axios.post('http://localhost:3000/api/playlists', {
+            const res = await axios.post('/api/playlists', {
                 name,
                 description
             });
@@ -42,7 +42,7 @@ export const PlaylistProvider = ({ children }) => {
     };
     const deletePlaylist = async(playlistId) => {
         try{
-            await axios.delete(`http://localhost:3000/api/playlists/${playlistId}`)
+            await axios.delete(`/api/playlists/${playlistId}`)
             setPlaylists(playlists.filter(playlist => playlist.id !== playlistId));
             toast.success("Playlist deleted");
         }
@@ -54,7 +54,7 @@ export const PlaylistProvider = ({ children }) => {
 
     const addTrackToPlaylist = async (playlistId, trackId) => {
         try {
-            await axios.post(`http://localhost:3000/api/playlists/${playlistId}/tracks`, {
+            await axios.post(`/api/playlists/${playlistId}/tracks`, {
                 track_id: trackId
             });
             toast.success("Track added to playlist");
@@ -66,7 +66,7 @@ export const PlaylistProvider = ({ children }) => {
 
     const removeTrackFromPlaylist = async (playlistId, trackId) => {
         try {
-            await axios.delete(`http://localhost:3000/api/playlists/${playlistId}/tracks/${trackId}`);
+            await axios.delete(`/api/playlists/${playlistId}/tracks/${trackId}`);
             toast.success("Track removed from playlist");
             // If we are viewing the playlist, we might want to trigger a refresh or update local state.
             // For now, let's just hope the parent component re-fetches or we can add a callback.

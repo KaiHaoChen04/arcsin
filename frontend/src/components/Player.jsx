@@ -9,7 +9,7 @@ const Player = ({ currentTrack, isPlaying, onPlayPause, onNext, onPrev }) => {
 
     useEffect(() => {
         if (currentTrack) {
-            audioRef.current.src = `http://localhost:3000/api/stream/${currentTrack.id}`;
+            audioRef.current.src = `/api/stream/${currentTrack.id}`;
             // Reset state for new track
             setCurrentTime(0);
             setDuration(0);

@@ -27,7 +27,7 @@ const Playlist = () => {
 
     const fetchPlaylist = async () => {
         try {
-            const res = await axios.get(`http://localhost:3000/api/playlists/${id}`);
+            const res = await axios.get(`/api/playlists/${id}`);
             setPlaylist(res.data);
             setTracks(res.data.tracks);
         } catch (error) {

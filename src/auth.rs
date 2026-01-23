@@ -129,7 +129,7 @@ pub async fn auth_middleware(
     }
 
     let token = &auth_header[7..];
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     let token_data = decode::<Claims>(
         token,

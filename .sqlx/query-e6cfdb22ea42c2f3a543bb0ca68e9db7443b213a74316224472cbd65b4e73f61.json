@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tracks (title, filename, data, mime_type) VALUES ($1, $2, $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Bytea",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e6cfdb22ea42c2f3a543bb0ca68e9db7443b213a74316224472cbd65b4e73f61"
+}

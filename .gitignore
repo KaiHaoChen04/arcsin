@@ -36,3 +36,7 @@ target
 
 # env
 .env
+
+#Docker files
+Dockerfile
+docker-compose.yml

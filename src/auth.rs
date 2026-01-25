@@ -84,8 +84,8 @@ pub async fn login(
         .bind(payload.username)
         .fetch_optional(&state.app.db)
         .await
-        .map_err(|_| AuthError::UserTimeOut)?
-        .ok_or(AuthError::UserTimeOut)?;
+        .map_err(|_| AuthError::WrongCredentials)?
+        .ok_or(AuthError::WrongCredentials)?;
 
     let parsed_hash =
         PasswordHash::new(&user.password_hash).map_err(|_| AuthError::WrongCredentials)?;

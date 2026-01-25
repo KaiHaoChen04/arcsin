@@ -14,6 +14,7 @@ mod auth;
 mod db;
 mod models;
 mod playlist;
+mod friends;
 
 use crate::app::App;
 use crate::models::TrackRecord;

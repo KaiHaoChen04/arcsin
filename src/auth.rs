@@ -19,9 +19,9 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    sub: String, // user
-    exp: usize,  // expiration
-    iat: usize,  // issued at
+    pub sub: String, // user
+    pub exp: usize,  // expiration
+    pub iat: usize,  // issued at
 }
 
 pub enum AuthError {
@@ -29,6 +29,7 @@ pub enum AuthError {
     MissingCredentials,
     TokenCreation,
     UserAlreadyExists,
+    CannotAddYourself,
     UserTimeOut,
 }
 
@@ -40,6 +41,7 @@ impl IntoResponse for AuthError {
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
             AuthError::UserTimeOut => (StatusCode::GATEWAY_TIMEOUT, "Time out"),
+            AuthError::CannotAddYourself => (StatusCode::BAD_REQUEST, "Cannot add yourself"),
         };
         let body = Json(serde_json::json!({
             "error": error_message,

@@ -68,11 +68,11 @@ async fn main() {
         .route(
             "/api/friends",
             get(friends::list_friends)
-                .post(friends::add_friends)
-                .layer(axum::middleware::from_fn_with_state(
-                    state.clone(),
-                    auth::auth_middleware,
-                )),
+            .post(friends::add_friends)
+            .layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::auth_middleware,
+            )),
         )
         .route(
             "/api/friends/:friend_id",

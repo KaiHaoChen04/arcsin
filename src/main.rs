@@ -14,6 +14,7 @@ mod auth;
 mod db;
 mod models;
 mod playlist;
+mod friends;
 
 use crate::app::App;
 use crate::models::TrackRecord;
@@ -63,6 +64,22 @@ async fn main() {
         .route(
             "/api/playlists",
             get(playlist::list_playlists).post(playlist::create_playlist),
+        )
+        .route(
+            "/api/friends",
+            get(friends::list_friends)
+            .post(friends::add_friends)
+            .layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::auth_middleware,
+            )),
+        )
+        .route(
+            "/api/friends/:friend_id",
+            delete(friends::remove_friends).layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                auth::auth_middleware,
+            )),
         )
         .route(
             "/api/playlists/:id", get(playlist::get_playlist).delete(playlist::delete_playlist))

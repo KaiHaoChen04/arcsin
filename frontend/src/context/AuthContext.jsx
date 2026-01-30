@@ -11,13 +11,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Decode token to get user info if needed, or just assume logged in for now.
-      // Ideally calls a /me endpoint or decodes JWT.
-      // For simplicity/security, we'll just check if token exists.
-      // We can also decode the JWT manually if we want user details immediately.
       setUser({ token }); 
     }
     setLoading(false);
+
+    // Axios interceptor to logout on 401
+    const interceptor = axios.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response && error.response.status === 401) {
+                logout();
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return () => {
+        axios.interceptors.response.eject(interceptor);
+    };
   }, []);
 
   const login = async (username, password) => {

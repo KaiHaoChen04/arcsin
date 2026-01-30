@@ -19,9 +19,9 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    sub: String, // user
-    exp: usize,  // expiration
-    iat: usize,  // issued at
+    pub sub: String, // user
+    pub exp: usize,  // expiration
+    pub iat: usize,  // issued at
 }
 
 pub enum AuthError {
@@ -29,6 +29,8 @@ pub enum AuthError {
     MissingCredentials,
     TokenCreation,
     UserAlreadyExists,
+    CannotAddYourself,
+    UserNotFound,
     UserTimeOut,
 }
 
@@ -40,6 +42,8 @@ impl IntoResponse for AuthError {
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
             AuthError::UserTimeOut => (StatusCode::GATEWAY_TIMEOUT, "Time out"),
+            AuthError::CannotAddYourself => (StatusCode::BAD_REQUEST, "Cannot add yourself"),
+            AuthError::UserNotFound => (StatusCode::NOT_FOUND, "User not found"),
         };
         let body = Json(serde_json::json!({
             "error": error_message,
@@ -84,8 +88,8 @@ pub async fn login(
         .bind(payload.username)
         .fetch_optional(&state.app.db)
         .await
-        .map_err(|_| AuthError::UserTimeOut)?
-        .ok_or(AuthError::UserTimeOut)?;
+        .map_err(|_| AuthError::WrongCredentials)?
+        .ok_or(AuthError::WrongCredentials)?;
 
     let parsed_hash =
         PasswordHash::new(&user.password_hash).map_err(|_| AuthError::WrongCredentials)?;
@@ -136,7 +140,10 @@ pub async fn auth_middleware(
         &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
     )
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    .map_err(|e| {
+        eprintln!("Auth middleware decode error: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     req.extensions_mut().insert(token_data.claims);
 

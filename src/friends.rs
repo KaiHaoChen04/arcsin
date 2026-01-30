@@ -48,13 +48,19 @@ pub async fn add_friends(
         .bind(&claims.sub) // retrieve user by claims subject
         .fetch_one(&state.app.db)
         .await
-        .map_err(|_| AuthError::WrongCredentials)?;
+        .map_err(|e| {
+            eprintln!("Failed to find current user in add_friends: {:?}", e);
+            AuthError::WrongCredentials
+        })?;
 
     let friend_user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
         .bind(&payload.username)
         .fetch_one(&state.app.db)
         .await
-        .map_err(|_| AuthError::WrongCredentials)?;
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => AuthError::UserNotFound,
+            _ => AuthError::TokenCreation, // Generic server error
+        })?;
 
     if current_user.id == friend_user.id {
         return Err(AuthError::CannotAddYourself);
@@ -66,7 +72,10 @@ pub async fn add_friends(
         .bind(friend_user.id)
         .execute(&state.app.db)
         .await
-        .map_err(|_| AuthError::TokenCreation)?;
+        .map_err(|e| {
+            eprintln!("Failed to insert friend relation: {:?}", e);
+            AuthError::TokenCreation
+        })?;
 
     Ok(StatusCode::CREATED)
 }

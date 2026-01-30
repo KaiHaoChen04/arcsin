@@ -30,6 +30,7 @@ pub enum AuthError {
     TokenCreation,
     UserAlreadyExists,
     CannotAddYourself,
+    UserNotFound,
     UserTimeOut,
 }
 
@@ -42,6 +43,7 @@ impl IntoResponse for AuthError {
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
             AuthError::UserTimeOut => (StatusCode::GATEWAY_TIMEOUT, "Time out"),
             AuthError::CannotAddYourself => (StatusCode::BAD_REQUEST, "Cannot add yourself"),
+            AuthError::UserNotFound => (StatusCode::NOT_FOUND, "User not found"),
         };
         let body = Json(serde_json::json!({
             "error": error_message,
@@ -138,7 +140,10 @@ pub async fn auth_middleware(
         &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
     )
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    .map_err(|e| {
+        eprintln!("Auth middleware decode error: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     req.extensions_mut().insert(token_data.claims);
 

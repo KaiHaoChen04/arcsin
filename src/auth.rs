@@ -106,7 +106,7 @@ pub async fn login(
         iat,
     };
 
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret".to_string());
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let token = encode(
         &Header::default(),
         &claims,

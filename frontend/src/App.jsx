@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Playlist from './pages/Playlist';
 import Friends from './pages/Friends';
+import Search from './pages/Search';
 
 // Home Page Component
 const Home = () => {
@@ -123,6 +124,7 @@ function App() {
                                 <Route path="/" element={<Home />} />
                                 <Route path="/playlist/:id" element={<Playlist />} />
                                 <Route path="/friends" element={<Friends />} />
+                                <Route path="/search" element={<Search />} />
                             </Route>
                         </Routes>
                         <ToastContainer position="top-right" theme="dark" />

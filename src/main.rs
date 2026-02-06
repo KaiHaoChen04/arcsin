@@ -12,9 +12,9 @@ use tower_http::cors::{Any, CorsLayer};
 mod app;
 mod auth;
 mod db;
+mod friends;
 mod models;
 mod playlist;
-mod friends;
 
 use crate::app::App;
 use crate::models::TrackRecord;
@@ -91,6 +91,7 @@ async fn main() {
             "/api/playlists/:id/tracks/:track_id",
             delete(playlist::remove_track_from_playlist),
         )
+        .route("/api/search/:track_name", get(search_tracks))
         .layer(cors)
         .with_state(state);
 
@@ -194,5 +195,18 @@ async fn stream_track(
             .unwrap())
     } else {
         Err(StatusCode::NOT_FOUND)
+    }
+}
+
+async fn search_tracks(
+    Path(track_name): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Json<Vec<TrackRecord>> {
+    match state.app.search_tracks(&track_name).await {
+        Ok(tracks) => Json(tracks),
+        Err(e) => {
+            eprintln!("Error searching tracks: {}", e);
+            Json(vec![])
+        }
     }
 }

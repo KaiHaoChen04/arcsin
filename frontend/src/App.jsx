@@ -4,6 +4,7 @@ import Player from './components/Player';
 import TrackList from './components/TrackList';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import UploadButton from './components/UploadButton';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
@@ -13,17 +14,22 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Playlist from './pages/Playlist';
 import Friends from './pages/Friends';
+import Search from './pages/Search';
 
 // Home Page Component
 const Home = () => {
     const [tracks, setTracks] = useState([]);
     const { handleSelectTrack, currentTrackId } = useOutletContext();
 
-    useEffect(() => {
+    const fetchTracks = () => {
         fetch('/api/tracks')
             .then(res => res.json())
             .then(data => setTracks(data))
             .catch(err => console.error("Failed to fetch tracks:", err));
+    };
+
+    useEffect(() => {
+        fetchTracks();
     }, []);
 
     const onSelect = (track) => {
@@ -32,7 +38,10 @@ const Home = () => {
 
     return (
         <div className="pb-24 pt-8 px-4 max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6 text-white">All Tracks</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-white">All Tracks</h1>
+                <UploadButton onUploadSuccess={fetchTracks} />
+            </div>
             <TrackList 
                 tracks={tracks} 
                 onSelect={onSelect} 
@@ -123,6 +132,7 @@ function App() {
                                 <Route path="/" element={<Home />} />
                                 <Route path="/playlist/:id" element={<Playlist />} />
                                 <Route path="/friends" element={<Friends />} />
+                                <Route path="/search" element={<Search />} />
                             </Route>
                         </Routes>
                         <ToastContainer position="top-right" theme="dark" />

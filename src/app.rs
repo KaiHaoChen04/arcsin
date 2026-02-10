@@ -12,58 +12,6 @@ impl App {
         Self { db }
     }
 
-    pub async fn import_tracks_from_dir(&self, path: &Path) -> std::io::Result<()> {
-        let entries = fs::read_dir(path)?;
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                if let Some(extension) = path.extension() {
-                    let ext = extension.to_string_lossy().to_lowercase();
-                    if ["mp3", "wav", "ogg", "flac"].contains(&ext.as_str()) {
-                        self.import_track(&path).await.ok();
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    async fn import_track(&self, path: &PathBuf) -> anyhow::Result<()> {
-        let filename = path.file_name().unwrap().to_string_lossy().to_string();
-
-        // Check if exists by filename (simple deduplication)
-        let exists = sqlx::query!("SELECT id FROM tracks WHERE filename = $1", filename)
-            .fetch_optional(&self.db)
-            .await?;
-
-        if exists.is_none() {
-            println!("Importing track: {}", filename);
-            let data = fs::read(path)?;
-            let mime_type = mime_guess::from_path(path)
-                .first_or_octet_stream()
-                .to_string();
-
-            sqlx::query!(
-                "INSERT INTO tracks (title, filename, data, mime_type) VALUES ($1, $2, $3, $4)",
-                filename, // Use filename as title for now
-                filename,
-                data,
-                mime_type
-            )
-            .execute(&self.db)
-            .await?;
-
-            // Delete file after successful import
-            fs::remove_file(path)?;
-            println!("Deleted file: {}", filename);
-        } else {
-            // File already exists in database, delete it from assets
-            fs::remove_file(path)?;
-            println!("Skipped duplicate and deleted file: {}", filename);
-        }
-        Ok(())
-    }
-
     pub async fn get_tracks(&self) -> anyhow::Result<Vec<TrackRecord>> {
         let tracks = sqlx::query_as!(
             TrackRecord,
@@ -72,5 +20,47 @@ impl App {
         .fetch_all(&self.db)
         .await?;
         Ok(tracks)
+    }
+    pub async fn search_tracks(&self, track_name: &str) -> anyhow::Result<Vec<TrackRecord>> {
+        let tracks = sqlx::query_as::<_, TrackRecord>(
+            "SELECT id, title, artist, filename, mime_type, created_at, ''::bytea as \"data!\" FROM tracks WHERE title ILIKE $1",
+        )
+        .bind(format!("%{}%", track_name))
+        .fetch_all(&self.db)
+        .await?;
+        Ok(tracks)
+    }
+
+    pub async fn upload_track(
+        &self,
+        filename: String,
+        data: Vec<u8>,
+        mime_type: String,
+    ) -> anyhow::Result<TrackRecord> {
+        // Check if exists by filename (simple deduplication)
+        let exists = sqlx::query!("SELECT id FROM tracks WHERE filename = $1", filename)
+            .fetch_optional(&self.db)
+            .await?;
+
+        if exists.is_some() {
+            anyhow::bail!("Track with filename '{}' already exists", filename);
+        }
+
+        println!("Uploading track: {}", filename);
+
+        let record = sqlx::query_as!(
+            TrackRecord,
+            r#"INSERT INTO tracks (title, filename, data, mime_type) 
+               VALUES ($1, $2, $3, $4) 
+               RETURNING id, title, artist, filename, mime_type, created_at, ''::bytea as "data!""#,
+            filename, // Use filename as title for now
+            filename,
+            data,
+            mime_type
+        )
+        .fetch_one(&self.db)
+        .await?;
+
+        Ok(record)
     }
 }

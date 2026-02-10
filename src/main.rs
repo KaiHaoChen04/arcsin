@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::{Path, State},
+    extract::{Multipart, Path, State},
     http::{Method, StatusCode},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
@@ -8,13 +8,14 @@ use axum::{
 };
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::cors::{Any, CorsLayer};
+use axum::extract::DefaultBodyLimit;
 
 mod app;
 mod auth;
 mod db;
+mod friends;
 mod models;
 mod playlist;
-mod friends;
 
 use crate::app::App;
 use crate::models::TrackRecord;
@@ -32,14 +33,6 @@ async fn main() {
     // Initialize App with DB
     let app = App::new(pool.clone());
 
-    // Scan and import tracks
-    let current_dir = std::env::current_dir().unwrap();
-    let assets_dir = current_dir.join("assets");
-    println!("Scanning directory: {:?}", assets_dir);
-    if let Err(e) = app.import_tracks_from_dir(&assets_dir).await {
-        eprintln!("Failed to import tracks: {}", e);
-    }
-
     let state = Arc::new(AppState { app });
 
     // CORS
@@ -51,6 +44,11 @@ async fn main() {
     // Router
     let app = Router::new()
         .route("/api/tracks", get(list_tracks))
+        .route(
+            "/api/tracks/upload",
+            // 100MB limit since axum default is 2MB so it'd be too less for a music file
+            post(upload_track).layer(DefaultBodyLimit::max(100 * 1024 * 1024)),
+        )
         .route("/api/stream/:id", get(stream_track))
         .route("/auth/register", post(auth::register))
         .route("/auth/login", post(auth::login))
@@ -67,12 +65,9 @@ async fn main() {
         )
         .route(
             "/api/friends",
-            get(friends::list_friends)
-            .post(friends::add_friends)
-            .layer(axum::middleware::from_fn_with_state(
-                state.clone(),
-                auth::auth_middleware,
-            )),
+            get(friends::list_friends).post(friends::add_friends).layer(
+                axum::middleware::from_fn_with_state(state.clone(), auth::auth_middleware),
+            ),
         )
         .route(
             "/api/friends/:friend_id",
@@ -82,7 +77,9 @@ async fn main() {
             )),
         )
         .route(
-            "/api/playlists/:id", get(playlist::get_playlist).delete(playlist::delete_playlist))
+            "/api/playlists/:id",
+            get(playlist::get_playlist).delete(playlist::delete_playlist),
+        )
         .route(
             "/api/playlists/:id/tracks",
             post(playlist::add_track_to_playlist),
@@ -91,6 +88,7 @@ async fn main() {
             "/api/playlists/:id/tracks/:track_id",
             delete(playlist::remove_track_from_playlist),
         )
+        .route("/api/search/:track_name", get(search_tracks))
         .layer(cors)
         .with_state(state);
 
@@ -195,4 +193,65 @@ async fn stream_track(
     } else {
         Err(StatusCode::NOT_FOUND)
     }
+}
+
+async fn search_tracks(
+    Path(track_name): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Json<Vec<TrackRecord>> {
+    match state.app.search_tracks(&track_name).await {
+        Ok(tracks) => Json(tracks),
+        Err(e) => {
+            eprintln!("Error searching tracks: {}", e);
+            Json(vec![])
+        }
+    }
+}
+
+async fn upload_track(
+    State(state): State<Arc<AppState>>,
+    mut multipart: Multipart,
+) -> Result<Json<TrackRecord>, StatusCode> {
+    if let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| StatusCode::BAD_REQUEST)?
+    {
+        let file_name = field
+            .file_name()
+            .map(|s| s.to_string())
+            .ok_or(StatusCode::BAD_REQUEST)?;
+
+        // Validate file extension
+        let ext = file_name
+            .rsplit('.')
+            .next()
+            .map(|s| s.to_lowercase())
+            .unwrap_or_default();
+
+        if !["mp3", "wav", "ogg", "flac"].contains(&ext.as_str()) {
+            return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
+        }
+
+        let content_type = field
+            .content_type()
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+
+        let data = field
+            .bytes()
+            .await
+            .map_err(|_| StatusCode::BAD_REQUEST)?
+            .to_vec();
+
+        match state.app.upload_track(file_name, data, content_type).await {
+            Ok(track) => return Ok(Json(track)),
+            Err(e) => {
+                eprintln!("Error uploading track: {}", e);
+                return Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        }
+    }
+
+    Err(StatusCode::BAD_REQUEST)
 }

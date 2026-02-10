@@ -34,7 +34,10 @@ pub async fn list_friends(
     .bind(user.id)
     .fetch_all(&state.app.db)
     .await
-    .map_err(|_| AuthError::TokenCreation)?; // using TokenCreation as generic 500 for now or add DB error
+    .map_err(|e| {
+        eprintln!("Failed to fetch friends: {:?}", e);
+        AuthError::UserNotFound
+    })?;
 
     Ok(Json(friends))
 }

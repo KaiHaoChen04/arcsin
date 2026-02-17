@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.7"
+axum = { version = "0.7", features = ["multipart"] }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -26,6 +26,3 @@ uuid = { version = "1.19.0", features = ["v4", "serde"] }
 time = { version = "0.3.44", features = ["serde-human-readable"] }
 mime_guess = "2.0.5"
 
-[[bin]]
-name = "server"
-path = "server/server.rs"

@@ -1,7 +1,5 @@
 use crate::models::TrackRecord;
 use sqlx::PgPool;
-use std::fs;
-use std::path::{Path, PathBuf};
 
 pub struct App {
     pub db: PgPool,

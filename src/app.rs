@@ -26,6 +26,7 @@ impl App {
         .bind(format!("%{}%", track_name))
         .fetch_all(&self.db)
         .await?;
+    
         Ok(tracks)
     }
 

@@ -21,12 +21,12 @@ impl App {
     }
     pub async fn search_tracks(&self, track_name: &str) -> anyhow::Result<Vec<TrackRecord>> {
         let tracks = sqlx::query_as::<_, TrackRecord>(
-            "SELECT id, title, artist, filename, mime_type, created_at, ''::bytea as \"data!\" FROM tracks WHERE title ILIKE $1",
+            "SELECT id, title, artist, filename, mime_type, created_at, ''::bytea as data FROM tracks WHERE title ILIKE $1",
         )
         .bind(format!("%{}%", track_name))
         .fetch_all(&self.db)
         .await?;
-    
+
         Ok(tracks)
     }
 

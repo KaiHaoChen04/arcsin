@@ -70,7 +70,7 @@ const Friends = () => {
     return (
         <div className="p-8 max-w-4xl mx-auto text-white">
             <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                <UserPlus className="text-purple-500" size={32} />
+                <UserPlus className="text-white-500" size={32} />
                 Friends
             </h1>
 

@@ -1,7 +1,5 @@
 use crate::models::TrackRecord;
 use sqlx::PgPool;
-use std::fs;
-use std::path::{Path, PathBuf};
 
 pub struct App {
     pub db: PgPool,
@@ -28,6 +26,7 @@ impl App {
         .bind(format!("%{}%", track_name))
         .fetch_all(&self.db)
         .await?;
+    
         Ok(tracks)
     }
 

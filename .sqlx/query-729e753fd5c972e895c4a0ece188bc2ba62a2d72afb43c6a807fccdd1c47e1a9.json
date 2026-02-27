@@ -1,0 +1,61 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tracks (title, filename, data, mime_type) \n               VALUES ($1, $2, $3, $4) \n               RETURNING id, title, artist, filename, mime_type, created_at, ''::bytea as \"data!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "artist",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "filename",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "mime_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "data!",
+        "type_info": "Bytea"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Bytea",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "729e753fd5c972e895c4a0ece188bc2ba62a2d72afb43c6a807fccdd1c47e1a9"
+}

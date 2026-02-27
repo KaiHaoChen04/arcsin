@@ -1,7 +1,7 @@
 use axum::{
     body::Body,
     extract::{Multipart, Path, State},
-    http::{Method, StatusCode},
+    http::{StatusCode},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Json, Router,
@@ -215,7 +215,10 @@ async fn upload_track(
     if let Some(field) = multipart
         .next_field()
         .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?
+        .map_err(|err| {
+            eprint!("Error fetching multipart: {}", err);
+            StatusCode::BAD_REQUEST
+        })?
     {
         let file_name = field
             .file_name()

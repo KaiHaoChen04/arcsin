@@ -11,7 +11,9 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{
+    decode, encode, errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use time::{Duration, OffsetDateTime};
@@ -31,7 +33,6 @@ pub enum AuthError {
     UserAlreadyExists,
     CannotAddYourself,
     UserNotFound,
-    UserTimeOut,
 }
 
 impl IntoResponse for AuthError {
@@ -41,7 +42,6 @@ impl IntoResponse for AuthError {
             AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
             AuthError::UserAlreadyExists => (StatusCode::BAD_REQUEST, "User already exists"),
-            AuthError::UserTimeOut => (StatusCode::GATEWAY_TIMEOUT, "Time out"),
             AuthError::CannotAddYourself => (StatusCode::BAD_REQUEST, "Cannot add yourself"),
             AuthError::UserNotFound => (StatusCode::NOT_FOUND, "User not found"),
         };
@@ -121,15 +121,20 @@ pub async fn auth_middleware(
     State(_state): State<Arc<AppState>>,
     mut req: Request,
     next: Next,
-) -> Result<Response, StatusCode> {
+) -> Result<Response, Response> {
     let auth_header = req
         .headers()
         .get(header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
+        .ok_or_else(|| {
+            auth_error_response(StatusCode::UNAUTHORIZED, "Missing authorization header")
+        })?;
 
     if !auth_header.starts_with("Bearer ") {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err(auth_error_response(
+            StatusCode::UNAUTHORIZED,
+            "Invalid authorization header",
+        ));
     }
 
     let token = &auth_header[7..];
@@ -142,10 +147,29 @@ pub async fn auth_middleware(
     )
     .map_err(|e| {
         eprintln!("Auth middleware decode error: {:?}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
+        match e.kind() {
+            ErrorKind::ExpiredSignature => {
+                auth_error_response(StatusCode::UNAUTHORIZED, "Token expired")
+            }
+            ErrorKind::InvalidToken
+            | ErrorKind::InvalidSignature
+            | ErrorKind::InvalidIssuer
+            | ErrorKind::InvalidAudience
+            | ErrorKind::ImmatureSignature => {
+                auth_error_response(StatusCode::UNAUTHORIZED, "Invalid token")
+            }
+            _ => auth_error_response(StatusCode::INTERNAL_SERVER_ERROR, "Token decode error"),
+        }
     })?;
 
     req.extensions_mut().insert(token_data.claims);
 
     Ok(next.run(req).await)
+}
+
+fn auth_error_response(status: StatusCode, message: &str) -> Response {
+    let body = Json(serde_json::json!({
+        "error": message.to_string(),
+    }));
+    (status, body).into_response()
 }
